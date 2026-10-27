@@ -3,3 +3,6 @@
 outputs/
 node_modules/
 *.tar.gz
+.env*
+!.env.example
+deployment-preview.png

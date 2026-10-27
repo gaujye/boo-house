@@ -8,12 +8,25 @@
 
 ## 技術與部署
 
-原生 HTML、CSS、Canvas 和 Web Audio，無需安裝依賴或建置。Vercel 使用 `vercel.json` 將 `dist` 作為網站根目錄。
+原生 HTML、CSS、Canvas 和 Web Audio，無需安裝依賴或建置。Vercel 使用 `vercel.json` 將 `dist` 作為網站根目錄，`api/player.js` 提供雲端玩家紀錄服務。
 
-程式模擬檢查：`node check.cjs`。
+程式模擬檢查：`node check.cjs`、`node check-player.cjs`。
 
 背景是以參考圖風格製作的 AI 生成素材，提示詞見 `ARTWORK.md`。
 
 ## 友善阿飄
 
 綠色愛心阿飄標示「別打我 −200」。誤擊固定扣 200 分（不套用連擊倍率），可扣至負分，並中斷連擊；讓它離開不影響連擊。結算會顯示誤擊次數。
+
+## Supabase 玩家記憶
+
+以暱稱辨識玩家，密碼可任意輸入或留空，前端不會傳送密碼，後端與資料庫也不儲存密碼。同一暱稱（不分英文字母大小寫）可取回紀錄；這不是身分驗證，知道暱稱的人都能使用該遊戲檔案。不要使用真實姓名或儲存私人資料。
+
+- 資料：最高分、完成局數、累積捕捉數、每局得分/捕捉/誤擊/點擊次數與時間；介面列出最近 8 局。
+- 工作階段以 HttpOnly、Secure、SameSite cookie 保存一年；更換裝置時輸入相同暱稱。
+- 完成一局後自動保存。若儲存時斷線，會暫存在目前瀏覽器；恢復連線、重新整理或按「重新同步」時再嘗試。暫存票證有效期為 7 天。若開始時無法連線，該局不寫入雲端。
+- 訪客仍可遊玩，但只有本機最高分；本機 `file://` 網址不支援雲端登入，請使用 Vercel 網址。
+
+設定方式：在 Supabase SQL Editor 執行 `database/schema.sql`。在 Vercel 設定 `SUPABASE_URL`、`SUPABASE_SECRET_KEY`、`BOO_SESSION_SECRET`（至少 32 bytes 隨機值）。依 `.env.example` 設定，真實金鑰不可以提交到 GitHub 或放進 `dist/`。
+
+資料表開啟 RLS，撤銷匿名與已登入角色的直接存取；僅後端 secret key 可透過受限 API 查詢。前端回傳的分數仍非競技級防作弊來源。
